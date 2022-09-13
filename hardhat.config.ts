@@ -1,11 +1,13 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
+import '@nomiclabs/hardhat-etherscan'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
 
 const pk_testnet = process.env.PK_TESTNET || ''
 const pk_mainnet = process.env.PK_MAINNET || ''
+const etherscan_api_key = process.env.ETHERSCAN_API_KEY || ''
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -23,6 +25,9 @@ const config: HardhatUserConfig = {
       gasPrice: 5000000001,
       accounts: [pk_mainnet],
     },
+  },
+  etherscan: {
+    apiKey: etherscan_api_key,
   },
   solidity: {
     version: '0.8.16',
