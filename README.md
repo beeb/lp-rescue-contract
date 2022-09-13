@@ -1,8 +1,9 @@
-# Sample Hardhat Project
+# LP Rescue Contract
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This contract allows to add liquidity to a Uniswap v2 or PancakeSwap v2 LP contract which was exploited by sending
+base tokens and calling the `sync` function, effectively setting one of the reserves to a non-zero value.
 
-Try running some of the following tasks:
+The Router contract will refuse to add liquidity to such a pool, so this contract can be used to add liquidity instead.
 
 ```shell
 npx hardhat help

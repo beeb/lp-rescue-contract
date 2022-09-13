@@ -1,0 +1,14 @@
+{
+  "printWidth": 120,
+  "semi": false,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": "*.sol",
+      "options": {
+        "singleQuote": false,
+        "compiler": "0.8.0"
+      }
+    }
+  ]
+}
