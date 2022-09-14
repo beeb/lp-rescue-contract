@@ -10,6 +10,7 @@
     "hardhat": "^2.11.1",
     "hardhat-abi-exporter": "^2.10.0",
     "prettier": "^2.7.1",
-    "solhint": "^3.3.7"
+    "solhint": "^3.3.7",
+    "uniswap-v2-deploy-plugin": "^0.0.4"
   }
 }

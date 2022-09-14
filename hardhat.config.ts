@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-abi-exporter'
+import 'uniswap-v2-deploy-plugin'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
