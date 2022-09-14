@@ -1,6 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
+/*
+
+ ___     _______   _   ______   _______ _______ _______ __   __ _______
+|   |   |       |_| |_|    _ | |       |       |       |  | |  |       |
+|   |   |    _  |_   _|   | || |    ___|  _____|       |  | |  |    ___|
+|   |   |   |_| | |_| |   |_||_|   |___| |_____|      _|  |_|  |   |___
+|   |___|    ___|     |    __  |    ___|_____  |     | |       |    ___|
+|       |   |         |   |  | |   |___ _____| |     |_|       |   |___
+|_______|___|         |___|  |_|_______|_______|_______|_______|_______|
+
+Contract to add liquidity to an AMM pair which is stuck due to a non-zero balance.
+
+https://github.com/beeb/lp-rescue-contract
+
+*/
+
 import "./interfaces/IDexRouter.sol";
 import "./interfaces/IDexFactory.sol";
 import "./interfaces/IDexPair.sol";
