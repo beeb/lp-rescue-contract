@@ -32,6 +32,12 @@ contract LPRescue {
     /// @notice The message value is not sufficient to add the desired liquidity amount
     error InsufficientValue();
 
+    /**
+    @notice The amount transferred to the pair did not match the desired amount
+    @param token The token which was only partially transferred to the pair
+    */
+    error PartialTransfer(address token);
+
     event LPRescued(address tokenA, address tokenB, address pair);
 
     constructor(address _router) {
@@ -71,18 +77,20 @@ contract LPRescue {
         (address token0, address token1) = sortTokens(tokenA, tokenB); // check which is which
         (uint256 amount0, uint256 amount1) = tokenA == token0 ? (amountA, amountB) : (amountB, amountA);
 
-        // one of the amounts transferred will be less than desired amount
-        // because one of the reserves is not zero
-        uint256 amount0Actual = amount0 - reserve0;
-        uint256 amount1Actual = amount1 - reserve1;
+        // the amounts transferred might be less than desired amounts
+        // because the balances are potentially not zero
+        uint256 amount0Actual = amount0 - IERC20(token0).balanceOf(address(pair));
+        uint256 amount1Actual = amount1 - IERC20(token1).balanceOf(address(pair));
+
         if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
             // check that the payable amount is enough
             revert InsufficientValue();
         }
 
         /// @dev Transfer the tokens to the pair
-        // convert native ETH to WETH if needed
+        /// @dev The calls will revert if transfer was not possible
         if (token0 == WETH) {
+            // convert native ETH to WETH if needed
             IWETH(token0).deposit{value: amount0Actual}();
             IERC20(token0).safeTransfer(pairAddress, amount0Actual); // transfer WETH
         } else {
@@ -90,10 +98,19 @@ contract LPRescue {
         }
 
         if (token1 == WETH) {
+            // convert native ETH to WETH if needed
             IWETH(token1).deposit{value: amount1Actual}();
             IERC20(token1).safeTransfer(pairAddress, amount1Actual); // transfer WETH
         } else {
             IERC20(token1).safeTransferFrom(msg.sender, pairAddress, amount1Actual);
+        }
+
+        /// @dev Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
+        if (IERC20(token0).balanceOf(pairAddress) != amount0) {
+            revert PartialTransfer(token0);
+        }
+        if (IERC20(token1).balanceOf(pairAddress) != amount1) {
+            revert PartialTransfer(token1);
         }
 
         /// @dev We now mint the liquidity tokens
