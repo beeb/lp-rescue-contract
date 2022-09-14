@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-etherscan'
+import 'hardhat-abi-exporter'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -28,6 +29,11 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: etherscan_api_key,
+  },
+  abiExporter: {
+    runOnCompile: true,
+    clear: true,
+    only: [':LPRescue$'],
   },
   solidity: {
     version: '0.8.16',
