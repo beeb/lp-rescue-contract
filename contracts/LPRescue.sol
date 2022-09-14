@@ -54,6 +54,9 @@ contract LPRescue {
     */
     error PartialTransfer(address token);
 
+    /// @notice Transfer of ETH for refund failed
+    error RefundFailed();
+
     event LPRescued(address tokenA, address tokenB, address pair);
 
     constructor(address _router) {
@@ -109,6 +112,22 @@ contract LPRescue {
             revert PartialTransfer(token1);
         }
 
+        // If we had excessive payable value, send it back
+        if (token0 == WETH && msg.value > amount0Actual) {
+            // solhint-disable-next-line avoid-low-level-calls
+            (bool success, ) = payable(msg.sender).call{ value: msg.value - amount0Actual}("");
+            if (!success) {
+                revert RefundFailed();
+            }
+        }
+        if (token1 == WETH && msg.value > amount1Actual) {
+            // solhint-disable-next-line avoid-low-level-calls
+            (bool success, ) = payable(msg.sender).call{ value: msg.value - amount1Actual}("");
+            if (!success) {
+                revert RefundFailed();
+            }
+        }
+
         // We now mint the liquidity tokens
         liquidity = pair.mint(to);
 
@@ -139,6 +158,7 @@ contract LPRescue {
         uint256 amount1
     ) internal returns (uint256 amount0Actual, uint256 amount1Actual) {
         if (address(pair) == address(0)) {
+            // pair doesn't exist yet.
             // pair could still be stuck after creation if `sync` is called and there
             // was one of the tokens at the contract address, but we don't handle creation here
             revert PairNotCreated();

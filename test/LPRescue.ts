@@ -25,8 +25,7 @@ describe('LPRescue', function () {
   let router: UniswapV2Router02
   let token0: Token
   let token1: Token
-  let token0Weth: Token | WETH9
-  let token1Weth: Token | WETH9
+  let tokenA: Token
   let pair: UniswapV2Pair
   let pairWeth: UniswapV2Pair
   let rescue: LPRescue
@@ -50,7 +49,7 @@ describe('LPRescue', function () {
   })
 
   this.beforeEach(async () => {
-    const tokenA = await tokenFactory.deploy(eth(1_000))
+    tokenA = await tokenFactory.deploy(eth(1_000))
     const tokenB = await tokenFactory.deploy(eth(1_000))
     await tokenA.deployed()
     await tokenB.deployed()
@@ -69,10 +68,6 @@ describe('LPRescue', function () {
     token1 = token0Address == tokenA.address ? tokenB : tokenA
     await token0.approve(router.address, constants.MaxUint256)
     await token1.approve(router.address, constants.MaxUint256)
-
-    const token0WethAddress = await pairWeth.token0()
-    token0Weth = token0WethAddress == weth.address ? weth : tokenA
-    token1Weth = token0WethAddress == weth.address ? tokenA : weth
   })
 
   it('token0 should make pair stuck', async function () {
@@ -124,16 +119,33 @@ describe('LPRescue', function () {
     await weth.transfer(pairWeth.address, 666)
     await expect(pairWeth.sync()).to.emit(pairWeth, 'Sync')
     expect(await weth.balanceOf(pairWeth.address)).to.equal(666)
+
+    expect(await tokenA.allowance(signer.address, router.address)).to.be.greaterThan(123)
     await expect(
-      router.addLiquidityETH(
-        token0Weth.address == weth.address ? token1Weth.address : token0Weth.address,
-        123,
-        0,
-        0,
-        constants.AddressZero,
-        (await time.latest()) + 3600,
-        { value: 456 }
-      )
+      router.addLiquidityETH(tokenA.address, 123, 0, 0, constants.AddressZero, (await time.latest()) + 3600, {
+        value: 456,
+      })
     ).to.be.reverted
+  })
+
+  it('rescue pair stuck with weth', async function () {
+    await weth.deposit({ value: eth(3) })
+    await weth.transfer(pairWeth.address, eth(3))
+    await expect(pairWeth.sync()).to.emit(pairWeth, 'Sync')
+    expect(await weth.balanceOf(pairWeth.address)).to.equal(eth(3))
+    expect(await tokenA.balanceOf(pairWeth.address)).to.equal(0)
+
+    await tokenA.approve(rescue.address, constants.MaxUint256)
+
+    await expect(
+      rescue.addLiquidity(tokenA.address, weth.address, eth(5), eth(10), signer.address, {
+        value: eth(10),
+      })
+    )
+      .to.emit(weth, 'Deposit')
+      .withArgs(rescue.address, eth(7))
+      .to.emit(rescue, 'LPRescued')
+      .withArgs(tokenA.address, weth.address, pairWeth.address)
+      .to.changeEtherBalances([signer, rescue, pairWeth], [eth(-7), 0, 0])
   })
 })
