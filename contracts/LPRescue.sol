@@ -138,8 +138,8 @@ contract LPRescue {
         amount0Actual = amount0 - IERC20(token0).balanceOf(address(pair));
         amount1Actual = amount1 - IERC20(token1).balanceOf(address(pair));
 
+        // check that the payable amount is enough
         if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
-            // check that the payable amount is enough
             revert InsufficientValue();
         }
     }
