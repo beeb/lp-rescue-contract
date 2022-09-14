@@ -61,55 +61,38 @@ contract LPRescue {
             uint256 liquidity
         )
     {
-        /// @dev Perform a series of checks
-        address pairAddress = factory.getPair(tokenA, tokenB);
-        if (pairAddress == address(0)) {
-            // pair could still be stuck after creation if `sync` is called and there
-            // was one of the tokens at the contract address, but we don't handle creation here
-            revert PairNotCreated();
-        }
-        IDexPair pair = IDexPair(pairAddress);
-        (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        if ((reserve0 == 0 && reserve1 == 0) || (reserve0 > 0 && reserve1 > 0)) {
-            // the pair is stuck when 1 reserve value is non-zero and the other is zero
-            revert PairNotStuck();
-        }
+        IDexPair pair = IDexPair(factory.getPair(tokenA, tokenB));
         (address token0, address token1) = sortTokens(tokenA, tokenB); // check which is which
         (uint256 amount0, uint256 amount1) = tokenA == token0 ? (amountA, amountB) : (amountB, amountA);
 
+        /// @dev Perform a series of checks
         // the amounts transferred might be less than desired amounts
         // because the balances are potentially not zero
-        uint256 amount0Actual = amount0 - IERC20(token0).balanceOf(address(pair));
-        uint256 amount1Actual = amount1 - IERC20(token1).balanceOf(address(pair));
-
-        if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
-            // check that the payable amount is enough
-            revert InsufficientValue();
-        }
+        (uint256 amount0Actual, uint256 amount1Actual) = checkPairAndInputs(pair, token0, token1, amount0, amount1);
 
         /// @dev Transfer the tokens to the pair
         /// @dev The calls will revert if transfer was not possible
         if (token0 == WETH) {
             // convert native ETH to WETH if needed
             IWETH(token0).deposit{value: amount0Actual}();
-            IERC20(token0).safeTransfer(pairAddress, amount0Actual); // transfer WETH
+            IERC20(token0).safeTransfer(address(pair), amount0Actual); // transfer WETH
         } else {
-            IERC20(token0).safeTransferFrom(msg.sender, pairAddress, amount0Actual);
+            IERC20(token0).safeTransferFrom(msg.sender, address(pair), amount0Actual);
         }
 
         if (token1 == WETH) {
             // convert native ETH to WETH if needed
             IWETH(token1).deposit{value: amount1Actual}();
-            IERC20(token1).safeTransfer(pairAddress, amount1Actual); // transfer WETH
+            IERC20(token1).safeTransfer(address(pair), amount1Actual); // transfer WETH
         } else {
-            IERC20(token1).safeTransferFrom(msg.sender, pairAddress, amount1Actual);
+            IERC20(token1).safeTransferFrom(msg.sender, address(pair), amount1Actual);
         }
 
         /// @dev Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
-        if (IERC20(token0).balanceOf(pairAddress) != amount0) {
+        if (IERC20(token0).balanceOf(address(pair)) != amount0) {
             revert PartialTransfer(token0);
         }
-        if (IERC20(token1).balanceOf(pairAddress) != amount1) {
+        if (IERC20(token1).balanceOf(address(pair)) != amount1) {
             revert PartialTransfer(token1);
         }
 
@@ -121,7 +104,36 @@ contract LPRescue {
             ? (amount0Actual, amount1Actual)
             : (amount1Actual, amount0Actual);
 
-        emit LPRescued(tokenA, tokenB, pairAddress);
+        emit LPRescued(tokenA, tokenB, address(pair));
+    }
+
+    function checkPairAndInputs(
+        IDexPair pair,
+        address token0,
+        address token1,
+        uint256 amount0,
+        uint256 amount1
+    ) internal returns (uint256 amount0Actual, uint256 amount1Actual) {
+        if (address(pair) == address(0)) {
+            // pair could still be stuck after creation if `sync` is called and there
+            // was one of the tokens at the contract address, but we don't handle creation here
+            revert PairNotCreated();
+        }
+        (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
+        if ((reserve0 == 0 && reserve1 == 0) || (reserve0 > 0 && reserve1 > 0)) {
+            // the pair is stuck when 1 reserve value is non-zero and the other is zero
+            revert PairNotStuck();
+        }
+
+        // the amounts transferred might be less than desired amounts
+        // because the balances are potentially not zero
+        amount0Actual = amount0 - IERC20(token0).balanceOf(address(pair));
+        amount1Actual = amount1 - IERC20(token1).balanceOf(address(pair));
+
+        if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
+            // check that the payable amount is enough
+            revert InsufficientValue();
+        }
     }
 
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
