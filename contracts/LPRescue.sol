@@ -71,22 +71,8 @@ contract LPRescue {
         (uint256 amount0Actual, uint256 amount1Actual) = checkPairAndInputs(pair, token0, token1, amount0, amount1);
 
         /// @dev Transfer the tokens to the pair
-        /// @dev The calls will revert if transfer was not possible
-        if (token0 == WETH) {
-            // convert native ETH to WETH if needed
-            IWETH(token0).deposit{value: amount0Actual}();
-            IERC20(token0).safeTransfer(address(pair), amount0Actual); // transfer WETH
-        } else {
-            IERC20(token0).safeTransferFrom(msg.sender, address(pair), amount0Actual);
-        }
-
-        if (token1 == WETH) {
-            // convert native ETH to WETH if needed
-            IWETH(token1).deposit{value: amount1Actual}();
-            IERC20(token1).safeTransfer(address(pair), amount1Actual); // transfer WETH
-        } else {
-            IERC20(token1).safeTransferFrom(msg.sender, address(pair), amount1Actual);
-        }
+        transferToPair(address(pair), token0, amount0Actual);
+        transferToPair(address(pair), token1, amount1Actual);
 
         /// @dev Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
         if (IERC20(token0).balanceOf(address(pair)) != amount0) {
@@ -133,6 +119,21 @@ contract LPRescue {
         if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
             // check that the payable amount is enough
             revert InsufficientValue();
+        }
+    }
+
+    function transferToPair(
+        address pair,
+        address token,
+        uint256 amount
+    ) internal {
+        /// @dev The calls will revert if transfer was not possible
+        if (token == WETH) {
+            // convert native ETH to WETH if needed
+            IWETH(token).deposit{value: amount}();
+            IERC20(token).safeTransfer(pair, amount); // transfer WETH
+        } else {
+            IERC20(token).safeTransferFrom(msg.sender, pair, amount);
         }
     }
 
