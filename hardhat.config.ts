@@ -33,6 +33,7 @@ const config: HardhatUserConfig = {
   abiExporter: {
     runOnCompile: true,
     clear: true,
+    flat: true,
     only: [':LPRescue$'],
   },
   solidity: {
