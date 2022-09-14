@@ -1,9 +1,33 @@
 # LP Rescue Contract
 
 This contract allows to add liquidity to a Uniswap v2 or PancakeSwap v2 LP contract which was exploited by sending
-base tokens and calling the `sync` function, effectively setting one of the reserves to a non-zero value.
+some tokens and calling the `sync` function, effectively setting one of the reserves to a non-zero value.
 
-The Router contract will refuse to add liquidity to such a pool, so this contract can be used to add liquidity instead.
+The Router contract will refuse to add liquidity to such a pool, so `LPRescue` can be used to add liquidity instead.
+
+## Description of the problem
+
+When calling the `sync` function on an AMM pair contract when one of the balances is zero and the other is non-zero,
+the contract will modify the reserve state variables so that they match the balances.
+
+As such, if some `token0` was sent to the pair, and afterwards (before `skim` is called by another actor, for instance)
+the `sync` function is called (potentially in the same transaction), the contract will set the `reserve0` state variable
+to the balance of `token0` in the contract, and `reserve1` will be equal to zero.
+
+In such a situation, the `addLiquidity` or `addLiquidityETH` of the DEX router will revert.
+
+## Description of the solution
+
+The solution is to handle this particular case (one reserve is non-zero and the other is zero) with fewer checks
+than the regular `addLiquidity` function.
+
+This contract, in essence, sends the missing amount of tokens to reach the desired liquidity ratio, and then calls
+the `mint` function of the pair in the same transaction, effectively resetting reserves and creating liquidity tokens.
+
+In our case, the `mint` function was never called before, because it would revert if one of the balances was zero.
+If both balances are non-zero, then LP tokens can be minted, the balances `sync`ed and `LPRescue` would not be needed.
+
+## Hardhat commands
 
 ```shell
 npx hardhat help
