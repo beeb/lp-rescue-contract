@@ -11,7 +11,7 @@ When calling the `sync` function on an AMM pair contract when one of the balance
 the contract will modify the reserve state variables so that they match the balances.
 
 As such, if some `token0` was sent to the pair, and afterwards (before `skim` is called by another actor, for instance)
-the `sync` function is called (potentially in the same transaction), the contract will set the `reserve0` state variable
+the `sync` function is called (usually in the same transaction), the contract will set the `reserve0` state variable
 to the balance of `token0` in the contract, and `reserve1` will be equal to zero.
 
 In such a situation, the `addLiquidity` or `addLiquidityETH` of the DEX router will revert.
