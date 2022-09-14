@@ -27,6 +27,12 @@ the `mint` function of the pair in the same transaction, effectively resetting r
 In our case, the `mint` function was never called before, because it would revert if one of the balances was zero.
 If both balances are non-zero, then LP tokens can be minted, the balances `sync`ed and `LPRescue` would not be needed.
 
+## Additional notes
+
+Due to how the pair contract is coded, when minting liquidity tokens, the pre-existing reserve value will be subtracted
+from the pair's balance before minting the liquidity tokens. This is usually insignificant as malicious actors send
+a very small amount of tokens to get the pair in this stuck state, since those tokens are lost to them.
+
 ## Hardhat commands
 
 ```shell
