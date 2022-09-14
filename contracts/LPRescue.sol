@@ -93,6 +93,17 @@ contract LPRescue {
         emit LPRescued(tokenA, tokenB, address(pair));
     }
 
+    /**
+    @notice Check that the pair exists, is indeed stuck and that the message value is sufficient
+    @dev Calculates the actual amounts to be transferred when balances are not zero
+    @param pair The pair to check
+    @param token0 The first token of the pair
+    @param token1 The second token of the pair
+    @param amount0 The desired amount of token0 in liquidity
+    @param amount1 The desired amount of token1 in liquidity
+    @return amount0Actual The actual amount of token0 to transfer
+    @return amount1Actual The actual amount of token1 to transfer
+    */
     function checkPairAndInputs(
         IDexPair pair,
         address token0,
@@ -122,6 +133,13 @@ contract LPRescue {
         }
     }
 
+    /**
+    @notice Transfer a token to the pair's address, optionally converting ETH to WETH
+    @dev Reverts if the transfer fails (e.g. due to lack of allowance or insufficient balance)
+    @param pair The pair's address
+    @param token The token to transfer
+    @param amount The amount to transfer
+    */
     function transferToPair(
         address pair,
         address token,
@@ -137,6 +155,12 @@ contract LPRescue {
         }
     }
 
+    /**
+    @notice Sort two token addresses, used to handle return values from pairs sorted in this order.
+    @dev Reverts if the two addresses are identical or if one of them is the zero address.
+    @param tokenA First address
+    @param tokenB Second address
+    */
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         if (tokenA == tokenB) {
             revert SortError(1); // identical addresses
