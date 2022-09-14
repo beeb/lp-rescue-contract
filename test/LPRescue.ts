@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import hre from 'hardhat'
 import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import type { BigNumberish } from 'ethers'
+import { time } from '@nomicfoundation/hardhat-network-helpers'
 import { constants } from 'ethers'
 import {
   Token,
@@ -58,18 +58,51 @@ describe('LPRescue', function () {
     const token0Address = await pair.token0()
     token0 = token0Address == tokenA.address ? tokenA : tokenB
     token1 = token0Address == tokenA.address ? tokenB : tokenA
+    await token0.approve(router.address, constants.MaxUint256)
+    await token1.approve(router.address, constants.MaxUint256)
   })
 
-  it('should deploy without errors', async function () {
-    expect(true)
-  })
-
-  it('should make pair stuck', async function () {
+  it('token0 should make pair stuck', async function () {
     await token0.transfer(pair.address, 666)
     await expect(pair.sync()).to.emit(pair, 'Sync')
     expect(await token0.balanceOf(pair.address)).to.equal(666)
     const reserves = await pair.getReserves()
     expect(reserves[0]).to.equal(666)
     expect(reserves[1]).to.equal(0)
+    expect(await pair.totalSupply()).to.equal(0)
+    await expect(
+      router.addLiquidity(
+        token0.address,
+        token1.address,
+        123,
+        456,
+        0,
+        0,
+        constants.AddressZero,
+        (await time.latest()) + 3600
+      )
+    ).to.be.reverted
+  })
+
+  it('token1 should make pair stuck', async function () {
+    await token1.transfer(pair.address, 420)
+    await expect(pair.sync()).to.emit(pair, 'Sync')
+    expect(await token1.balanceOf(pair.address)).to.equal(420)
+    const reserves = await pair.getReserves()
+    expect(reserves[0]).to.equal(0)
+    expect(reserves[1]).to.equal(420)
+    expect(await pair.totalSupply()).to.equal(0)
+    await expect(
+      router.addLiquidity(
+        token0.address,
+        token1.address,
+        123,
+        456,
+        0,
+        0,
+        constants.AddressZero,
+        (await time.latest()) + 3600
+      )
+    ).to.be.reverted
   })
 })
