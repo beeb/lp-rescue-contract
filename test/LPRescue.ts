@@ -25,7 +25,10 @@ describe('LPRescue', function () {
   let router: UniswapV2Router02
   let token0: Token
   let token1: Token
+  let token0Weth: Token | WETH9
+  let token1Weth: Token | WETH9
   let pair: UniswapV2Pair
+  let pairWeth: UniswapV2Pair
   let rescue: LPRescue
 
   this.beforeAll(async () => {
@@ -51,15 +54,25 @@ describe('LPRescue', function () {
     const tokenB = await tokenFactory.deploy(eth(1_000))
     await tokenA.deployed()
     await tokenB.deployed()
-    await factory.createPair(tokenA.address, tokenB.address)
-    const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
+
     const Pair = await hre.ethers.getContractFactory('UniswapV2Pair', signer)
+    await factory.createPair(tokenA.address, tokenB.address)
+    let pairAddress = await factory.getPair(tokenA.address, tokenB.address)
     pair = (await Pair.attach(pairAddress)) as UniswapV2Pair
+
+    await factory.createPair(weth.address, tokenA.address)
+    pairAddress = await factory.getPair(weth.address, tokenA.address)
+    pairWeth = (await Pair.attach(pairAddress)) as UniswapV2Pair
+
     const token0Address = await pair.token0()
     token0 = token0Address == tokenA.address ? tokenA : tokenB
     token1 = token0Address == tokenA.address ? tokenB : tokenA
     await token0.approve(router.address, constants.MaxUint256)
     await token1.approve(router.address, constants.MaxUint256)
+
+    const token0WethAddress = await pairWeth.token0()
+    token0Weth = token0WethAddress == weth.address ? weth : tokenA
+    token1Weth = token0WethAddress == weth.address ? tokenA : weth
   })
 
   it('token0 should make pair stuck', async function () {
@@ -102,6 +115,24 @@ describe('LPRescue', function () {
         0,
         constants.AddressZero,
         (await time.latest()) + 3600
+      )
+    ).to.be.reverted
+  })
+
+  it('weth should make pair stuck', async function () {
+    await weth.deposit({ value: 666 })
+    await weth.transfer(pairWeth.address, 666)
+    await expect(pairWeth.sync()).to.emit(pairWeth, 'Sync')
+    expect(await weth.balanceOf(pairWeth.address)).to.equal(666)
+    await expect(
+      router.addLiquidityETH(
+        token0Weth.address == weth.address ? token1Weth.address : token0Weth.address,
+        123,
+        0,
+        0,
+        constants.AddressZero,
+        (await time.latest()) + 3600,
+        { value: 456 }
       )
     ).to.be.reverted
   })
