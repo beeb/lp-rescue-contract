@@ -46,6 +46,17 @@ contract LPRescue {
         WETH = router.WETH();
     }
 
+    /**
+    @notice Add liquidity to a pair which is stuck due to a non-zero reserve
+    @param tokenA The first token of the pair
+    @param tokenB The second token of the pair
+    @param amountA The amount of tokenA to add to the pair
+    @param amountB The amount of tokenB to add to the pair
+    @param to The recipient of the liquidity tokens
+    @return amountAActual The actual amount of tokenA transferred to the pair
+    @return amountBActual The actual amount of tokenB transferred to the pair
+    @return liquidity The amount of liquidity tokens minted
+    */
     function addLiquidity(
         address tokenA,
         address tokenB,
