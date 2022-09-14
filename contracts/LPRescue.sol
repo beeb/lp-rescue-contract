@@ -85,7 +85,7 @@ contract LPRescue {
         transferToPair(address(pair), token0, amount0Actual);
         transferToPair(address(pair), token1, amount1Actual);
 
-        //^Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
+        // Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
         if (IERC20(token0).balanceOf(address(pair)) != amount0) {
             revert PartialTransfer(token0);
         }
