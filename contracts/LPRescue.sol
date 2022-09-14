@@ -76,16 +76,16 @@ contract LPRescue {
         (address token0, address token1) = sortTokens(tokenA, tokenB); // check which is which
         (uint256 amount0, uint256 amount1) = tokenA == token0 ? (amountA, amountB) : (amountB, amountA);
 
-        /// @dev Perform a series of checks
+        // Perform a series of checks
         // the amounts transferred might be less than desired amounts
         // because the balances are potentially not zero
         (uint256 amount0Actual, uint256 amount1Actual) = checkPairAndInputs(pair, token0, token1, amount0, amount1);
 
-        /// @dev Transfer the tokens to the pair
+        // Transfer the tokens to the pair
         transferToPair(address(pair), token0, amount0Actual);
         transferToPair(address(pair), token1, amount1Actual);
 
-        /// @dev Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
+        //^Double-check that all tokens were transferred (i.e. there was no tax on the transfers)
         if (IERC20(token0).balanceOf(address(pair)) != amount0) {
             revert PartialTransfer(token0);
         }
@@ -93,7 +93,7 @@ contract LPRescue {
             revert PartialTransfer(token1);
         }
 
-        /// @dev We now mint the liquidity tokens
+        // We now mint the liquidity tokens
         liquidity = pair.mint(to);
 
         // return values
