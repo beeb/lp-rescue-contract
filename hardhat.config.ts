@@ -2,7 +2,6 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-abi-exporter'
-import 'uniswap-v2-deploy-plugin'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -38,12 +37,32 @@ const config: HardhatUserConfig = {
     only: [':LPRescue$'],
   },
   solidity: {
-    version: '0.8.16',
-    settings: {
-      optimizer: {
-        enabled: true,
+    compilers: [
+      {
+        version: '0.8.16',
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
-    },
+      {
+        version: '0.6.6',
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
+      },
+      {
+        version: '0.5.16',
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
+      },
+    ],
   },
 }
 
