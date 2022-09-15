@@ -188,4 +188,18 @@ describe('LPRescue', function () {
       .to.be.revertedWithCustomError(rescue, 'InsufficientDesiredAmount')
       .withArgs(token0.address, eth(0.5), eth(0.5))
   })
+
+  it('undesired eth was sent too', async function () {
+    await makePairStuck(pair, token0, 666, weth)
+    expect(await token1.balanceOf(pair.address)).to.equal(0)
+    await expect(rescue.addLiquidity(token0.address, token1.address, eth(2), eth(2), signer.address, { value: eth(1) }))
+      .to.emit(rescue, 'LPRescued')
+      .withArgs(token0.address, token1.address, pair.address)
+      .to.changeTokenBalances(token0, [signer, rescue, pair], [eth(-2).add(666), 0, eth(2)])
+      .to.changeTokenBalances(token1, [signer, rescue, pair], [eth(-2), 0, eth(2)])
+      .to.changeEtherBalance(signer, 0)
+
+    expect(await pair.totalSupply()).to.be.greaterThan(0)
+    expect(await pair.balanceOf(signer.address)).to.be.greaterThan(0)
+  })
 })
