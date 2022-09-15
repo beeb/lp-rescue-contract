@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import hre from 'hardhat'
 import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { time } from '@nomicfoundation/hardhat-network-helpers'
-import { constants } from 'ethers'
+import { constants, type BigNumberish } from 'ethers'
 import {
   Token,
   Token__factory,
@@ -12,9 +12,23 @@ import {
   UniswapV2Pair,
   WETH9,
 } from '../typechain-types'
+import { token } from '../typechain-types/@openzeppelin/contracts'
 
 function eth(n: number) {
   return hre.ethers.utils.parseEther(n.toString())
+}
+
+async function makePairStuck(pair: UniswapV2Pair, token: Token | WETH9, amount: BigNumberish, weth: WETH9) {
+  if (token.address === weth.address) {
+    await weth.deposit({ value: amount })
+    await weth.transfer(pair.address, amount)
+    await expect(pair.sync()).to.emit(pair, 'Sync')
+    expect(await weth.balanceOf(pair.address)).to.equal(amount)
+    return
+  }
+  await token.transfer(pair.address, amount)
+  await expect(pair.sync()).to.emit(pair, 'Sync')
+  expect(await token.balanceOf(pair.address)).to.equal(amount)
 }
 
 describe('LPRescue', function () {
@@ -68,12 +82,18 @@ describe('LPRescue', function () {
     token1 = token0Address == tokenA.address ? tokenB : tokenA
     await token0.approve(router.address, constants.MaxUint256)
     await token1.approve(router.address, constants.MaxUint256)
+    await weth.approve(router.address, constants.MaxUint256)
+    await token0.approve(rescue.address, constants.MaxUint256)
+    await token1.approve(rescue.address, constants.MaxUint256)
+    await weth.approve(rescue.address, constants.MaxUint256)
+    await token0.approve(pair.address, constants.MaxUint256)
+    await token1.approve(pair.address, constants.MaxUint256)
+    await tokenA.approve(pairWeth.address, constants.MaxUint256)
+    await weth.approve(pairWeth.address, constants.MaxUint256)
   })
 
   it('token0 should make pair stuck', async function () {
-    await token0.transfer(pair.address, 666)
-    await expect(pair.sync()).to.emit(pair, 'Sync')
-    expect(await token0.balanceOf(pair.address)).to.equal(666)
+    await makePairStuck(pair, token0, 666, weth)
     const reserves = await pair.getReserves()
     expect(reserves[0]).to.equal(666)
     expect(reserves[1]).to.equal(0)
@@ -93,9 +113,7 @@ describe('LPRescue', function () {
   })
 
   it('token1 should make pair stuck', async function () {
-    await token1.transfer(pair.address, 420)
-    await expect(pair.sync()).to.emit(pair, 'Sync')
-    expect(await token1.balanceOf(pair.address)).to.equal(420)
+    await makePairStuck(pair, token1, 420, weth)
     const reserves = await pair.getReserves()
     expect(reserves[0]).to.equal(0)
     expect(reserves[1]).to.equal(420)
@@ -115,11 +133,7 @@ describe('LPRescue', function () {
   })
 
   it('weth should make pair stuck', async function () {
-    await weth.deposit({ value: 666 })
-    await weth.transfer(pairWeth.address, 666)
-    await expect(pairWeth.sync()).to.emit(pairWeth, 'Sync')
-    expect(await weth.balanceOf(pairWeth.address)).to.equal(666)
-
+    await makePairStuck(pairWeth, weth, 666, weth)
     expect(await tokenA.allowance(signer.address, router.address)).to.be.greaterThan(123)
     await expect(
       router.addLiquidityETH(tokenA.address, 123, 0, 0, constants.AddressZero, (await time.latest()) + 3600, {
@@ -129,14 +143,8 @@ describe('LPRescue', function () {
   })
 
   it('rescue pair stuck with weth', async function () {
-    await weth.deposit({ value: eth(3) })
-    await weth.transfer(pairWeth.address, eth(3))
-    await expect(pairWeth.sync()).to.emit(pairWeth, 'Sync')
-    expect(await weth.balanceOf(pairWeth.address)).to.equal(eth(3))
+    await makePairStuck(pairWeth, weth, eth(3), weth)
     expect(await tokenA.balanceOf(pairWeth.address)).to.equal(0)
-
-    await tokenA.approve(rescue.address, constants.MaxUint256)
-
     await expect(
       rescue.addLiquidity(tokenA.address, weth.address, eth(5), eth(10), signer.address, {
         value: eth(10),
@@ -147,5 +155,21 @@ describe('LPRescue', function () {
       .to.emit(rescue, 'LPRescued')
       .withArgs(tokenA.address, weth.address, pairWeth.address)
       .to.changeEtherBalances([signer, rescue, pairWeth], [eth(-7), 0, 0])
+
+    expect(await pairWeth.totalSupply()).to.be.greaterThan(0)
+    expect(await pairWeth.balanceOf(signer.address)).to.be.greaterThan(0)
+  })
+
+  it('rescue pair stuck with token', async function () {
+    await makePairStuck(pair, token1, 666, weth)
+    expect(await token0.balanceOf(pair.address)).to.equal(0)
+    await expect(rescue.addLiquidity(token1.address, token0.address, eth(5), eth(3), signer.address))
+      .to.emit(rescue, 'LPRescued')
+      .withArgs(token1.address, token0.address, pair.address)
+      .to.changeTokenBalances(token1, [signer, rescue, pair], [eth(-5).add(666), 0, eth(5).sub(666)])
+      .to.changeTokenBalances(token0, [signer, rescue, pair], [eth(-3), 0, eth(3)])
+
+    expect(await pair.totalSupply()).to.be.greaterThan(0)
+    expect(await pair.balanceOf(signer.address)).to.be.greaterThan(0)
   })
 })
