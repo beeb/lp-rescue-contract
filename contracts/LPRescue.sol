@@ -54,7 +54,7 @@ contract LPRescue {
     @param desiredAmount The total amount for `token` passed to `addLiquidity`
     @param existingBalance The already existing pair balance for `token`
     */
-    error InsufficientDesiredAmount(address token, uint desiredAmount, uint existingBalance);
+    error InsufficientDesiredAmount(address token, uint256 desiredAmount, uint256 existingBalance);
 
     /// @notice The message value is not sufficient to add the desired liquidity amount
     error InsufficientValue();
@@ -125,18 +125,11 @@ contract LPRescue {
 
         // If we had excessive payable value, send it back
         if (token0 == WETH && msg.value > amount0Actual) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = payable(msg.sender).call{ value: msg.value - amount0Actual}("");
-            if (!success) {
-                revert RefundFailed();
-            }
-        }
-        if (token1 == WETH && msg.value > amount1Actual) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = payable(msg.sender).call{ value: msg.value - amount1Actual}("");
-            if (!success) {
-                revert RefundFailed();
-            }
+            safeTransferETH(msg.sender, msg.value - amount0Actual);
+        } else if (token1 == WETH && msg.value > amount1Actual) {
+            safeTransferETH(msg.sender, msg.value - amount1Actual);
+        } else if (token0 != WETH && token1 != WETH && msg.value > 0) {
+            safeTransferETH(msg.sender, msg.value);
         }
 
         // We now mint the liquidity tokens
@@ -185,8 +178,8 @@ contract LPRescue {
             revert ZeroAmount();
         }
 
-        uint token0Balance = IERC20(token0).balanceOf(address(pair));
-        uint token1Balance = IERC20(token1).balanceOf(address(pair));
+        uint256 token0Balance = IERC20(token0).balanceOf(address(pair));
+        uint256 token1Balance = IERC20(token1).balanceOf(address(pair));
 
         // check if there is not already too much in the pair
         if (amount0 < token0Balance) {
@@ -245,6 +238,19 @@ contract LPRescue {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         if (token0 == address(0)) {
             revert SortError(2); // zero address
+        }
+    }
+
+    /**
+    @notice Transfer ETH to an address forwarding all remaining gas, reverting if the transfer fails
+    @param to The address to transfer ETH to
+    @param value The amount of ETH to transfer
+    */
+    function safeTransferETH(address to, uint256 value) internal {
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = payable(to).call{value: value}("");
+        if (!success) {
+            revert RefundFailed();
         }
     }
 }
