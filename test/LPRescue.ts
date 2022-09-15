@@ -172,4 +172,11 @@ describe('LPRescue', function () {
     expect(await pair.totalSupply()).to.be.greaterThan(0)
     expect(await pair.balanceOf(signer.address)).to.be.greaterThan(0)
   })
+
+  it('pair has already too much', async function () {
+    await makePairStuck(pair, token0, eth(1), weth)
+    expect(await token1.balanceOf(pair.address)).to.equal(0)
+    await expect(rescue.addLiquidity(token1.address, token0.address, eth(0.5), eth(0.1), constants.AddressZero)).to.be
+      .reverted
+  })
 })

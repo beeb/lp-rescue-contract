@@ -11,6 +11,27 @@
     "type": "constructor"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "desiredAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "existingBalance",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientDesiredAmount",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InsufficientValue",
     "type": "error"
@@ -50,6 +71,11 @@
       }
     ],
     "name": "SortError",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAmount",
     "type": "error"
   },
   {

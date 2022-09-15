@@ -45,6 +45,17 @@ contract LPRescue {
     /// @notice The pair is not stuck, use the dex's addLiquidity function
     error PairNotStuck();
 
+    /// @notice One of the amounts is zero, both amounts need to be non-zero
+    error ZeroAmount();
+
+    /**
+    @notice Error raised if the total desired amount of tokens for liquidity exceeds the tokens already in the pair
+    @param token The token that has an already exceeding balance
+    @param desiredAmount The total amount for `token` passed to `addLiquidity`
+    @param existingBalance The already existing pair balance for `token`
+    */
+    error InsufficientDesiredAmount(address token, uint desiredAmount, uint existingBalance);
+
     /// @notice The message value is not sufficient to add the desired liquidity amount
     error InsufficientValue();
 
@@ -164,15 +175,31 @@ contract LPRescue {
             revert PairNotCreated();
         }
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        if ((reserve0 == 0 && reserve1 == 0) || (reserve0 > 0 && reserve1 > 0)) {
+        if ((reserve0 <= 0 && reserve1 <= 0) || (reserve0 > 0 && reserve1 > 0)) {
             // the pair is stuck when 1 reserve value is non-zero and the other is zero
             revert PairNotStuck();
         }
 
+        // check that both amounts are positive
+        if (amount0 <= 0 || amount1 <= 0) {
+            revert ZeroAmount();
+        }
+
+        uint token0Balance = IERC20(token0).balanceOf(address(pair));
+        uint token1Balance = IERC20(token1).balanceOf(address(pair));
+
+        // check if there is not already too much in the pair
+        if (amount0 < token0Balance) {
+            revert InsufficientDesiredAmount(token0, amount0, token0Balance);
+        }
+        if (amount1 < token1Balance) {
+            revert InsufficientDesiredAmount(token1, amount1, token1Balance);
+        }
+
         // the amounts transferred might be less than desired amounts
         // because the balances are potentially not zero
-        amount0Actual = amount0 - IERC20(token0).balanceOf(address(pair));
-        amount1Actual = amount1 - IERC20(token1).balanceOf(address(pair));
+        amount0Actual = amount0 - token0Balance;
+        amount1Actual = amount1 - token1Balance;
 
         // check that the payable amount is enough
         if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
@@ -193,6 +220,9 @@ contract LPRescue {
         uint256 amount
     ) internal {
         /// @dev The calls will revert if transfer was not possible
+        if (amount <= 0) {
+            return; // early exit if no amount needs to be transferred
+        }
         if (token == WETH) {
             // convert native ETH to WETH if needed
             IWETH(token).deposit{value: amount}();

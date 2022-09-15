@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-abi-exporter'
+import 'hardhat-gas-reporter'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -35,6 +36,9 @@ const config: HardhatUserConfig = {
     clear: true,
     flat: true,
     only: [':LPRescue$'],
+  },
+  gasReporter: {
+    enabled: true,
   },
   solidity: {
     compilers: [
