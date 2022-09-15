@@ -163,14 +163,14 @@ describe('LPRescue', function () {
   it('rescue pair stuck with token', async function () {
     await makePairStuck(pair, token1, 666, weth)
     expect(await token0.balanceOf(pair.address)).to.equal(0)
-    await expect(rescue.addLiquidity(token1.address, token0.address, eth(5), eth(3), signer.address))
+    await expect(rescue.addLiquidity(token1.address, token0.address, eth(5), eth(3), constants.AddressZero))
       .to.emit(rescue, 'LPRescued')
       .withArgs(token1.address, token0.address, pair.address)
       .to.changeTokenBalances(token1, [signer, rescue, pair], [eth(-5).add(666), 0, eth(5).sub(666)])
       .to.changeTokenBalances(token0, [signer, rescue, pair], [eth(-3), 0, eth(3)])
 
     expect(await pair.totalSupply()).to.be.greaterThan(0)
-    expect(await pair.balanceOf(signer.address)).to.be.greaterThan(0)
+    expect(await pair.balanceOf(signer.address)).to.equal(0) // lp tokens sent to zero address
   })
 
   it('pair has already too much', async function () {
@@ -181,15 +181,11 @@ describe('LPRescue', function () {
       .withArgs(token0.address, eth(0.1), eth(1))
   })
 
-  it('pair has exactly the desired amount already', async function () {
+  it('pair has exactly the desired amount', async function () {
     await makePairStuck(pair, token0, eth(0.5), weth)
     expect(await token1.balanceOf(pair.address)).to.equal(0)
-    await expect(rescue.addLiquidity(token0.address, token1.address, eth(0.5), eth(0.5), constants.AddressZero))
-      .to.emit(rescue, 'LPRescued')
-      .withArgs(token0.address, token1.address, pair.address)
-      .to.emit(token1, 'Transfer')
-
-    expect(await pair.totalSupply()).to.be.greaterThan(0)
-    expect(await pair.balanceOf(signer.address)).to.be.greaterThan(0)
+    await expect(rescue.addLiquidity(token0.address, token1.address, eth(0.5), eth(0.5), signer.address))
+      .to.be.revertedWithCustomError(rescue, 'InsufficientDesiredAmount')
+      .withArgs(token0.address, eth(0.5), eth(0.5))
   })
 })

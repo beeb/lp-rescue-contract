@@ -49,7 +49,8 @@ contract LPRescue {
     error ZeroAmount();
 
     /**
-    @notice Error raised if the total desired amount of tokens for liquidity exceeds the tokens already in the pair
+    @notice Error raised if the total desired amount of tokens for liquidity equals or exceeds the
+    tokens already in the pair
     @param token The token that has an already exceeding balance
     @param desiredAmount The total amount for `token` passed to `addLiquidity`
     @param existingBalance The already existing pair balance for `token`
@@ -181,11 +182,11 @@ contract LPRescue {
         uint256 token0Balance = IERC20(token0).balanceOf(address(pair));
         uint256 token1Balance = IERC20(token1).balanceOf(address(pair));
 
-        // check if there is not already too much in the pair
-        if (amount0 < token0Balance) {
+        // check if there is not already too much in the pair (desired amount must be strictly greater than balance)
+        if (amount0 <= token0Balance) {
             revert InsufficientDesiredAmount(token0, amount0, token0Balance);
         }
-        if (amount1 < token1Balance) {
+        if (amount1 <= token1Balance) {
             revert InsufficientDesiredAmount(token1, amount1, token1Balance);
         }
 
@@ -214,6 +215,7 @@ contract LPRescue {
     ) internal {
         /// @dev The calls will revert if transfer was not possible
         if (amount <= 0) {
+            // sanity check, should not happen due to previous checks
             return; // early exit if no amount needs to be transferred
         }
         if (token == WETH) {
