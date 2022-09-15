@@ -12,7 +12,6 @@ import {
   UniswapV2Pair,
   WETH9,
 } from '../typechain-types'
-import { token } from '../typechain-types/@openzeppelin/contracts'
 
 function eth(n: number) {
   return hre.ethers.utils.parseEther(n.toString())
