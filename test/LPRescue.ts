@@ -176,7 +176,8 @@ describe('LPRescue', function () {
   it('pair has already too much', async function () {
     await makePairStuck(pair, token0, eth(1), weth)
     expect(await token1.balanceOf(pair.address)).to.equal(0)
-    await expect(rescue.addLiquidity(token1.address, token0.address, eth(0.5), eth(0.1), constants.AddressZero)).to.be
-      .reverted
+    await expect(rescue.addLiquidity(token1.address, token0.address, eth(0.5), eth(0.1), constants.AddressZero))
+      .to.be.revertedWithCustomError(rescue, 'InsufficientDesiredAmount')
+      .withArgs(token0.address, eth(0.1), eth(1))
   })
 })
