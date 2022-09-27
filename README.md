@@ -1,3 +1,5 @@
+![LP-Rescue](https://raw.githubusercontent.com/beeb/lp-rescue-frontend/main/src/lib/assets/logo-halftone.svg)
+
 # LP Rescue Contract
 
 This contract allows to add liquidity to a Uniswap v2 or PancakeSwap v2 LP contract which was exploited by sending
