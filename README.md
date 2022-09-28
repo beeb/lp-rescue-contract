@@ -3,7 +3,9 @@
 # LP Rescue Contract
 
 <p align="center">
-[![Hardhat Test CI](https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml/badge.svg)](https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml)
+  <a href="https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml">
+    <img src="https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml/badge.svg" />
+  </a>
 </p>
 
 This contract allows to add liquidity to a Uniswap v2 or PancakeSwap v2 LP contract which was exploited by sending
