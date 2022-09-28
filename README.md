@@ -1,4 +1,4 @@
-![LP-Rescue](https://raw.githubusercontent.com/beeb/lp-rescue-frontend/main/src/lib/assets/logo-halftone.svg)
+![LP-Rescue](https://github.com/beeb/lp-rescue-frontend/raw/main/logo-readme.svg)
 
 # LP Rescue Contract
 
