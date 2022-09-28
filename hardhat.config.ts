@@ -7,8 +7,8 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
-const pk_testnet = process.env.PK_TESTNET || ''
-const pk_mainnet = process.env.PK_MAINNET || ''
+const pk_testnet = process.env.PK_TESTNET || '0000000000000000000000000000000000000000000000000000000000000001'
+const pk_mainnet = process.env.PK_MAINNET || '0000000000000000000000000000000000000000000000000000000000000001'
 const etherscan_api_key = process.env.ETHERSCAN_API_KEY || ''
 
 const config: HardhatUserConfig = {
