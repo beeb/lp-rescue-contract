@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: etherscan_api_key,
+    apiKey: etherscan_api_key, // need to change this when deploying to other chains
   },
   abiExporter: {
     runOnCompile: true,
