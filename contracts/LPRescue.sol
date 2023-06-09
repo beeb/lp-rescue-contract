@@ -56,7 +56,11 @@ contract LPRescue is ReentrancyGuard {
     @param desiredAmount The total amount for `token` passed to `addLiquidity`
     @param existingBalance The already existing pair balance for `token`
     */
-    error InsufficientDesiredAmount(address token, uint256 desiredAmount, uint256 existingBalance);
+    error InsufficientDesiredAmount(
+        address token,
+        uint256 desiredAmount,
+        uint256 existingBalance
+    );
 
     /// @notice The message value is not sufficient to add the desired liquidity amount
     error InsufficientValue();
@@ -95,15 +99,32 @@ contract LPRescue is ReentrancyGuard {
         uint256 amountA,
         uint256 amountB,
         address to
-    ) external payable nonReentrant returns (uint256 amountAActual, uint256 amountBActual, uint256 liquidity) {
+    )
+        external
+        payable
+        nonReentrant
+        returns (
+            uint256 amountAActual,
+            uint256 amountBActual,
+            uint256 liquidity
+        )
+    {
         IDexPair pair = IDexPair(factory.getPair(tokenA, tokenB));
         (address token0, address token1) = sortTokens(tokenA, tokenB); // check which is which
-        (uint256 amount0, uint256 amount1) = tokenA == token0 ? (amountA, amountB) : (amountB, amountA);
+        (uint256 amount0, uint256 amount1) = tokenA == token0
+            ? (amountA, amountB)
+            : (amountB, amountA);
 
         // Perform a series of checks
         // the amounts transferred might be less than desired amounts
         // because the balances are potentially not zero
-        (uint256 amount0Actual, uint256 amount1Actual) = checkPairAndInputs(pair, token0, token1, amount0, amount1);
+        (uint256 amount0Actual, uint256 amount1Actual) = checkPairAndInputs(
+            pair,
+            token0,
+            token1,
+            amount0,
+            amount1
+        );
 
         // Transfer the tokens to the pair
         transferToPair(address(pair), token0, amount0Actual);
@@ -162,7 +183,9 @@ contract LPRescue is ReentrancyGuard {
             revert PairNotCreated();
         }
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        if ((reserve0 <= 0 && reserve1 <= 0) || (reserve0 > 0 && reserve1 > 0)) {
+        if (
+            (reserve0 <= 0 && reserve1 <= 0) || (reserve0 > 0 && reserve1 > 0)
+        ) {
             // the pair is stuck when 1 reserve value is non-zero and the other is zero
             revert PairNotStuck();
         }
@@ -189,7 +212,10 @@ contract LPRescue is ReentrancyGuard {
         amount1Actual = amount1 - token1Balance;
 
         // check that the payable amount is enough
-        if ((token0 == WETH && msg.value < amount0Actual) || (token1 == WETH && msg.value < amount1Actual)) {
+        if (
+            (token0 == WETH && msg.value < amount0Actual) ||
+            (token1 == WETH && msg.value < amount1Actual)
+        ) {
             revert InsufficientValue();
         }
     }
@@ -201,7 +227,11 @@ contract LPRescue is ReentrancyGuard {
     @param token The token to transfer
     @param amount The amount to transfer
     */
-    function transferToPair(address pair, address token, uint256 amount) internal {
+    function transferToPair(
+        address pair,
+        address token,
+        uint256 amount
+    ) internal {
         /// @dev The calls will revert if transfer was not possible
         if (amount <= 0) {
             // sanity check, should not happen due to previous checks
@@ -222,11 +252,16 @@ contract LPRescue is ReentrancyGuard {
     @param tokenA First address
     @param tokenB Second address
     */
-    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
+    function sortTokens(
+        address tokenA,
+        address tokenB
+    ) internal pure returns (address token0, address token1) {
         if (tokenA == tokenB) {
             revert SortError(1); // identical addresses
         }
-        (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        (token0, token1) = tokenA < tokenB
+            ? (tokenA, tokenB)
+            : (tokenB, tokenA);
         if (token0 == address(0)) {
             revert SortError(2); // zero address
         }
