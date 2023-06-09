@@ -95,16 +95,7 @@ contract LPRescue is ReentrancyGuard {
         uint256 amountA,
         uint256 amountB,
         address to
-    )
-        external
-        payable
-        nonReentrant
-        returns (
-            uint256 amountAActual,
-            uint256 amountBActual,
-            uint256 liquidity
-        )
-    {
+    ) external payable nonReentrant returns (uint256 amountAActual, uint256 amountBActual, uint256 liquidity) {
         IDexPair pair = IDexPair(factory.getPair(tokenA, tokenB));
         (address token0, address token1) = sortTokens(tokenA, tokenB); // check which is which
         (uint256 amount0, uint256 amount1) = tokenA == token0 ? (amountA, amountB) : (amountB, amountA);
@@ -210,11 +201,7 @@ contract LPRescue is ReentrancyGuard {
     @param token The token to transfer
     @param amount The amount to transfer
     */
-    function transferToPair(
-        address pair,
-        address token,
-        uint256 amount
-    ) internal {
+    function transferToPair(address pair, address token, uint256 amount) internal {
         /// @dev The calls will revert if transfer was not possible
         if (amount <= 0) {
             // sanity check, should not happen due to previous checks

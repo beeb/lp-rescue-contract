@@ -1,27 +1,27 @@
+import assert from 'assert'
 import { ethers } from 'hardhat'
 import hre from 'hardhat'
-import assert from 'assert'
 
 const router: Record<number, string> = {
-  97: '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3',
-  56: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+	97: '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3',
+	56: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
 }
 
 async function main() {
-  console.log('Deploying on network: ', hre.network.name)
+	console.log('Deploying on network: ', hre.network.name)
 
-  assert(hre.network.config.chainId && router[hre.network.config.chainId])
+	assert(hre.network.config.chainId && router[hre.network.config.chainId])
 
-  const Contract = await ethers.getContractFactory('LPRescue')
-  const contract = await Contract.deploy(router[hre.network.config.chainId])
-  await contract.deployed()
+	const Contract = await ethers.getContractFactory('LPRescue')
+	const contract = await Contract.deploy(router[hre.network.config.chainId])
+	await contract.waitForDeployment()
 
-  console.log('Contract deployed to:', contract.address)
+	console.log('Contract deployed to:', await contract.getAddress())
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
+	console.error(error)
+	process.exitCode = 1
 })
