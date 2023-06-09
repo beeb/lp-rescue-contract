@@ -12,8 +12,7 @@ async function main() {
 
 	assert(hre.network.config.chainId && router[hre.network.config.chainId])
 
-	const Contract = await ethers.getContractFactory('LPRescue')
-	const contract = await Contract.deploy(router[hre.network.config.chainId])
+	const contract = await ethers.deployContract('LPRescue', [router[hre.network.config.chainId]])
 	await contract.waitForDeployment()
 
 	console.log('Contract deployed to:', await contract.getAddress())

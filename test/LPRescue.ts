@@ -47,17 +47,13 @@ describe('LPRescue', function () {
 		const [s] = await ethers.getSigners()
 		signer = s
 
-		const Weth = await ethers.getContractFactory('WETH9', signer)
-		weth = (await Weth.deploy()) as WETH9
+		weth = await ethers.deployContract('WETH9', signer)
 
-		const Factory = await ethers.getContractFactory('UniswapV2Factory', signer)
-		factory = (await Factory.deploy(ethers.ZeroAddress)) as UniswapV2Factory
+		factory = await ethers.deployContract('UniswapV2Factory', [ethers.ZeroAddress], signer)
 
-		const Router = await ethers.getContractFactory('UniswapV2Router02', signer)
-		router = (await Router.deploy(factory.getAddress(), weth.getAddress())) as UniswapV2Router02
+		router = await ethers.deployContract('UniswapV2Router02', [factory.getAddress(), weth.getAddress()], signer)
 
-		const Rescue = await ethers.getContractFactory('LPRescue')
-		rescue = await Rescue.deploy(router.getAddress())
+		rescue = await ethers.deployContract('LPRescue', [router.getAddress()], signer)
 
 		tokenFactory = await ethers.getContractFactory('Token', signer)
 	})
@@ -68,7 +64,6 @@ describe('LPRescue', function () {
 		await tokenA.waitForDeployment()
 		await tokenB.waitForDeployment()
 
-		const Pair = await ethers.getContractFactory('UniswapV2Pair', signer)
 		await factory.createPair(tokenA.getAddress(), tokenB.getAddress())
 		let pairAddress = await factory.getPair(tokenA.getAddress(), tokenB.getAddress())
 		pair = await ethers.getContractAt('UniswapV2Pair', pairAddress)
