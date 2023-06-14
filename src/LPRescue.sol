@@ -17,10 +17,10 @@ https://github.com/beeb/lp-rescue-contract
 
 */
 
-import "../interfaces/IDexRouter.sol";
-import "../interfaces/IDexFactory.sol";
-import "../interfaces/IDexPair.sol";
-import "../interfaces/IWETH.sol";
+import "./interfaces/IDexRouter.sol";
+import "./interfaces/IDexFactory.sol";
+import "./interfaces/IDexPair.sol";
+import "./interfaces/IWETH.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
