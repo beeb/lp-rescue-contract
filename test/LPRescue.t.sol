@@ -142,14 +142,19 @@ contract LPRescueTest is Test {
         emit Deposit(address(rescue), 7 ether); // 3 ether + 7 ether = 10 ether
         vm.expectEmit(true, true, true, false);
         emit LPRescued(address(tokenA), address(weth), address(pairWeth));
-        (uint amountA, uint amountB, uint liquidity) = rescue.addLiquidity{
-            value: 10 ether
-        }(address(tokenA), address(weth), 5 ether, 10 ether, address(this));
+        (uint amountAActual, uint amountBActual, uint liquidity) = rescue
+            .addLiquidity{value: 10 ether}(
+            address(tokenA),
+            address(weth),
+            5 ether,
+            10 ether,
+            address(this)
+        );
         assertEq(address(this).balance, balanceBefore - 7 ether);
         assertGt(pairWeth.totalSupply(), 0);
         assertGt(pairWeth.balanceOf(address(this)), 0);
-        assertEq(amountA, 5 ether);
-        assertEq(amountB, 7 ether);
+        assertEq(amountAActual, 5 ether);
+        assertEq(amountBActual, 7 ether); // 10 ether - 3 ether stuck in the pair
         assertEq(pairWeth.balanceOf(address(this)), liquidity);
     }
 }
