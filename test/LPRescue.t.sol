@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity =0.8.19;
 
-import "forge-std/Test.sol";
-import "src/interfaces/IWETH.sol";
-import "src/interfaces/IDexFactory.sol";
-import "src/interfaces/IDexRouter.sol";
-import "src/interfaces/IDexPair.sol";
-import "src/test/Token.sol";
-import "src/LPRescue.sol";
+import {Test} from "forge-std/Test.sol";
+import {IWETH} from "src/interfaces/IWETH.sol";
+import {IDexFactory} from "src/interfaces/IDexFactory.sol";
+import {IDexRouter} from "src/interfaces/IDexRouter.sol";
+import {IDexPair} from "src/interfaces/IDexPair.sol";
+import {Token} from "src/test/Token.sol";
+import {LPRescue} from "src/LPRescue.sol";
 
 contract LPRescueTest is Test {
     IWETH weth;

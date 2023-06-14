@@ -43,12 +43,11 @@ from the pair's balance when calculating the invariant (and amount of LP tokens)
 malicious actors send a very small amount of tokens to get the pair in this stuck state, since those tokens are lost
 to them.
 
-## Hardhat commands
+## Forge/PNPM commands
 
 ```shell
-npx hardhat help
-npx hardhat test
-GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy_[amm].ts
+$ pnpm i
+$ pnpm update
+$ forge compile
+$ forge test -vvv
 ```
