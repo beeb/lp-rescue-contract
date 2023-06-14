@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "forge-std/StdCheats.sol";
 import "src/interfaces/IWETH.sol";
 import "src/interfaces/IDexFactory.sol";
 import "src/interfaces/IDexRouter.sol";
@@ -15,23 +14,21 @@ contract LPRescueTest is Test {
     IDexFactory factory;
     IDexRouter router;
     LPRescue rescue;
-
     Token tokenA;
     Token tokenB;
     IDexPair pair;
     IDexPair pairWeth;
 
+    event Sync(uint112 reserve0, uint112 reserve1);
+
     function setUp() public {
         weth = IWETH(deployCode("WETH9.sol"));
         factory = IDexFactory(
-            deployCode(
-                "DexFactory.sol:UniswapV2Factory",
-                abi.encode(address(0))
-            )
+            deployCode("UniswapV2Factory.sol", abi.encode(address(0)))
         );
         router = IDexRouter(
             deployCode(
-                "DexRouter.sol:UniswapV2Router02",
+                "UniswapV2Router02.sol",
                 abi.encode(address(factory), address(weth))
             )
         );
@@ -50,5 +47,50 @@ contract LPRescueTest is Test {
         tokenA.approve(address(rescue), type(uint).max);
         tokenB.approve(address(rescue), type(uint).max);
         weth.approve(address(rescue), type(uint).max);
+    }
+
+    function makeTokenPairStuck(Token token, uint amount) private {
+        token.transfer(address(pair), amount);
+        vm.expectEmit(true, true, false, false);
+        if (address(token) == pair.token0()) {
+            emit Sync(uint112(amount), 0);
+        } else {
+            emit Sync(0, uint112(amount));
+        }
+        pair.sync();
+        assertEq(tokenA.balanceOf(address(pair)), amount);
+        assertEq(pair.totalSupply(), 0);
+    }
+
+    function test_SyncMakesPairStuck() public {
+        makeTokenPairStuck(tokenA, 666);
+    }
+
+    function testFail_TokenAMakesPairStuck() public {
+        makeTokenPairStuck(tokenA, 666);
+        router.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            123,
+            456,
+            0,
+            0,
+            address(0),
+            block.timestamp
+        );
+    }
+
+    function testFail_TokenBMakesPairStuck() public {
+        makeTokenPairStuck(tokenB, 420);
+        router.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            123,
+            456,
+            0,
+            0,
+            address(0),
+            block.timestamp
+        );
     }
 }
