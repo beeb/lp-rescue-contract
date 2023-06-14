@@ -2,32 +2,44 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "src/test/WETH9.sol";
-import "src/test/DexFactory.sol";
-import "src/test/DexRouter.sol";
-import "src/test/DexPair.sol";
+import "forge-std/StdCheats.sol";
+import "src/interfaces/IWETH.sol";
+import "src/interfaces/IDexFactory.sol";
+import "src/interfaces/IDexRouter.sol";
+import "src/interfaces/IDexPair.sol";
 import "src/test/Token.sol";
 import "src/LPRescue.sol";
 
 contract LPRescueTest is Test {
-    WETH9 weth;
-    UniswapV2Factory factory;
-    UniswapV2Router02 router;
+    IWETH weth;
+    IDexFactory factory;
+    IDexRouter router;
     LPRescue rescue;
+
     Token tokenA;
     Token tokenB;
-    UniswapV2Pair pair;
-    UniswapV2Pair pairWeth;
+    IDexPair pair;
+    IDexPair pairWeth;
 
     function setUp() public {
-        weth = new WETH9();
-        factory = new UniswapV2Factory(address(0));
-        router = new UniswapV2Router02(address(factory), address(weth));
+        weth = IWETH(deployCode("WETH9.sol"));
+        factory = IDexFactory(
+            deployCode(
+                "DexFactory.sol:UniswapV2Factory",
+                abi.encode(address(0))
+            )
+        );
+        router = IDexRouter(
+            deployCode(
+                "DexRouter.sol:UniswapV2Router02",
+                abi.encode(address(factory), address(weth))
+            )
+        );
         rescue = new LPRescue(address(router));
         tokenA = new Token(1000 ether);
         tokenB = new Token(1000 ether);
-        pair = factory.createPair(address(tokenA), address(tokenB));
-        pairWeth = factory.createPair(address(weth), address(tokenA));
+        pair = IDexPair(factory.createPair(address(tokenA), address(tokenB)));
+        pairWeth = IDexPair(factory.createPair(address(weth), address(tokenA)));
         tokenA.approve(address(router), type(uint).max);
         tokenB.approve(address(router), type(uint).max);
         weth.approve(address(router), type(uint).max);
