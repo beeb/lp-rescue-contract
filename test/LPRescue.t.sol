@@ -224,4 +224,52 @@ contract LPRescueTest is Test {
             address(0)
         );
     }
+
+    function test_SuperfluousEthIsRefunded() public {
+        _makeTokenPairStuck(tokenA, 666);
+        assertEq(tokenB.balanceOf(address(pair)), 0);
+        uint balanceBefore = address(this).balance;
+        uint balanceBeforeA = tokenA.balanceOf(address(this));
+        uint balanceBeforeB = tokenB.balanceOf(address(this));
+        uint pairBalanceBefore = address(pair).balance;
+        uint pairBalanceBeforeA = tokenA.balanceOf(address(pair));
+        uint pairBalanceBeforeB = tokenB.balanceOf(address(pair));
+        uint rescueBalanceBefore = address(rescue).balance;
+        uint rescueBalanceBeforeA = tokenA.balanceOf(address(rescue));
+        uint rescueBalanceBeforeB = tokenB.balanceOf(address(rescue));
+        vm.expectEmit(true, true, true, false);
+        emit LPRescued(address(tokenA), address(tokenB), address(pair));
+        (uint amountAActual, uint amountBActual, uint liquidity) = rescue
+            .addLiquidity{value: 1 ether}(
+            address(tokenA),
+            address(tokenB),
+            2 ether,
+            2 ether,
+            address(this)
+        );
+        assertEq(amountAActual, 2 ether - 666);
+        assertEq(amountBActual, 2 ether);
+        assertEq(pair.balanceOf(address(this)), liquidity);
+
+        assertEq(
+            tokenA.balanceOf(address(this)),
+            balanceBeforeA - 2 ether + 666
+        );
+        assertEq(tokenB.balanceOf(address(this)), balanceBeforeB - 2 ether);
+        assertEq(address(this).balance, balanceBefore);
+
+        assertEq(address(pair).balance, pairBalanceBefore);
+        assertEq(
+            tokenA.balanceOf(address(pair)),
+            pairBalanceBeforeA + 2 ether - 666
+        );
+        assertEq(tokenB.balanceOf(address(pair)), pairBalanceBeforeB + 2 ether);
+
+        assertEq(address(rescue).balance, rescueBalanceBefore);
+        assertEq(tokenA.balanceOf(address(rescue)), rescueBalanceBeforeA);
+        assertEq(tokenB.balanceOf(address(rescue)), rescueBalanceBeforeB);
+
+        assertGt(pair.totalSupply(), 0);
+        assertGt(pair.balanceOf(address(this)), 0);
+    }
 }
