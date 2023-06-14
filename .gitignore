@@ -1,12 +1,19 @@
-node_modules
+cache/
+out/
+
+# Ignore Environment Variables!
 .env
-coverage
-coverage.json
-typechain
-typechain-types
+.env.*
+!.env.example
 
-#Hardhat files
-cache
-artifacts
+# Ignore all vscode settings
+.vscode/
 
-.vscode
+# Ignore flattened files
+flattened.txt
+
+broadcast
+
+# Ignore local misc files
+.DS_Store
+*.pem
