@@ -134,7 +134,6 @@ contract LPRescueTest is Test {
     }
 
     function test_RescuePairStuckWithWeth() public {
-        // emit log_named_uint("balance", address(this).balance);
         _makeWethPairStuck(3 ether);
         uint balanceBefore = address(this).balance;
         assertEq(tokenA.balanceOf(address(pairWeth)), 0);
@@ -156,5 +155,33 @@ contract LPRescueTest is Test {
         assertEq(amountAActual, 5 ether);
         assertEq(amountBActual, 7 ether); // 10 ether - 3 ether stuck in the pair
         assertEq(pairWeth.balanceOf(address(this)), liquidity);
+    }
+
+    function test_RescuePairStuckWithToken() public {
+        _makeTokenPairStuck(tokenB, 666);
+        uint balanceBeforeB = tokenB.balanceOf(address(this));
+        uint balanceBeforeA = tokenA.balanceOf(address(this));
+        assertEq(tokenA.balanceOf(address(pair)), 0);
+        vm.expectEmit(true, true, true, false);
+        emit LPRescued(address(tokenB), address(tokenA), address(pair));
+        (uint amountBActual, uint amountAActual, uint liquidity) = rescue
+            .addLiquidity(
+                address(tokenB),
+                address(tokenA),
+                5 ether,
+                3 ether,
+                address(1)
+            );
+        assertEq(
+            tokenB.balanceOf(address(this)),
+            balanceBeforeB - 5 ether + 666
+        );
+        assertEq(tokenA.balanceOf(address(this)), balanceBeforeA - 3 ether);
+        assertGt(pair.totalSupply(), 0);
+        assertGt(pair.balanceOf(address(1)), 0);
+        assertEq(pair.balanceOf(address(this)), 0);
+        assertEq(amountBActual, 5 ether - 666);
+        assertEq(amountAActual, 3 ether);
+        assertEq(pair.balanceOf(address(1)), liquidity);
     }
 }
