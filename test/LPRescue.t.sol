@@ -62,6 +62,19 @@ contract LPRescueTest is Test {
         assertEq(pair.totalSupply(), 0);
     }
 
+    function makeWethPairStuck(uint amount) private {
+        weth.transfer(address(pair), amount);
+        vm.expectEmit(true, true, false, false);
+        if (address(weth) == pair.token0()) {
+            emit Sync(uint112(amount), 0);
+        } else {
+            emit Sync(0, uint112(amount));
+        }
+        pair.sync();
+        assertEq(weth.balanceOf(address(pair)), amount);
+        assertEq(pair.totalSupply(), 0);
+    }
+
     function test_SyncMakesPairStuck() public {
         makeTokenPairStuck(tokenA, 666);
     }
@@ -87,6 +100,18 @@ contract LPRescueTest is Test {
             address(tokenB),
             123,
             456,
+            0,
+            0,
+            address(0),
+            block.timestamp
+        );
+    }
+
+    function testFail_WethMakesPairStuck() public {
+        makeWethPairStuck(666);
+        router.addLiquidityETH{value: 123}(
+            address(tokenA),
+            123,
             0,
             0,
             address(0),
