@@ -184,4 +184,24 @@ contract LPRescueTest is Test {
         assertEq(amountAActual, 3 ether);
         assertEq(pair.balanceOf(address(1)), liquidity);
     }
+
+    function test_PairHasAlreadyTooMuch() public {
+        _makeTokenPairStuck(tokenA, 1 ether);
+        assertEq(tokenB.balanceOf(address(pair)), 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                LPRescue.InsufficientDesiredAmount.selector,
+                address(tokenA),
+                0.1 ether,
+                1 ether
+            )
+        );
+        rescue.addLiquidity(
+            address(tokenB),
+            address(tokenA),
+            0.5 ether,
+            0.1 ether,
+            address(0)
+        );
+    }
 }
