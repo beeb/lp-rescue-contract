@@ -50,4 +50,6 @@ $ pnpm i
 $ pnpm update
 $ forge compile
 $ forge test -vvv
+$ ./utils/deploy_pcs_testnet.sh
+$ ./utils/deploy_pcs_mainnet.sh
 ```
