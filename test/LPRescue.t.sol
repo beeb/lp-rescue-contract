@@ -20,7 +20,7 @@ contract LPRescueTest is Test {
     IDexPair pairWeth;
 
     event Sync(uint112 reserve0, uint112 reserve1);
-    event Deposit(address indexed dst, uint wad);
+    event Deposit(address indexed dst, uint256 wad);
     event LPRescued(address tokenA, address tokenB, address pair);
 
     receive() external payable {}
@@ -28,37 +28,30 @@ contract LPRescueTest is Test {
     function setUp() public {
         vm.deal(address(this), 100 ether);
         weth = IWETH(deployCode("WETH9.sol"));
-        factory = IDexFactory(
-            deployCode("UniswapV2Factory.sol", abi.encode(address(0)))
-        );
-        router = IDexRouter(
-            deployCode(
-                "UniswapV2Router02.sol",
-                abi.encode(address(factory), address(weth))
-            )
-        );
+        factory = IDexFactory(deployCode("UniswapV2Factory.sol", abi.encode(address(0))));
+        router = IDexRouter(deployCode("UniswapV2Router02.sol", abi.encode(address(factory), address(weth))));
         rescue = new LPRescue(address(router));
         tokenA = new Token(1000 ether);
         tokenB = new Token(1000 ether);
         pair = IDexPair(factory.createPair(address(tokenA), address(tokenB)));
         pairWeth = IDexPair(factory.createPair(address(weth), address(tokenA)));
 
-        tokenA.approve(address(router), type(uint).max);
-        tokenB.approve(address(router), type(uint).max);
-        weth.approve(address(router), type(uint).max);
+        tokenA.approve(address(router), type(uint256).max);
+        tokenB.approve(address(router), type(uint256).max);
+        weth.approve(address(router), type(uint256).max);
 
-        tokenA.approve(address(pair), type(uint).max);
-        tokenB.approve(address(pair), type(uint).max);
+        tokenA.approve(address(pair), type(uint256).max);
+        tokenB.approve(address(pair), type(uint256).max);
 
-        weth.approve(address(pairWeth), type(uint).max);
-        tokenA.approve(address(pairWeth), type(uint).max);
+        weth.approve(address(pairWeth), type(uint256).max);
+        tokenA.approve(address(pairWeth), type(uint256).max);
 
-        tokenA.approve(address(rescue), type(uint).max);
-        tokenB.approve(address(rescue), type(uint).max);
-        weth.approve(address(rescue), type(uint).max);
+        tokenA.approve(address(rescue), type(uint256).max);
+        tokenB.approve(address(rescue), type(uint256).max);
+        weth.approve(address(rescue), type(uint256).max);
     }
 
-    function _makeTokenPairStuck(Token token, uint amount) private {
+    function _makeTokenPairStuck(Token token, uint256 amount) private {
         token.transfer(address(pair), amount);
         vm.expectEmit(true, true, false, false);
         if (address(token) == pair.token0()) {
@@ -71,7 +64,7 @@ contract LPRescueTest is Test {
         assertEq(pair.totalSupply(), 0);
     }
 
-    function _makeWethPairStuck(uint amount) private {
+    function _makeWethPairStuck(uint256 amount) private {
         weth.deposit{value: amount}();
         weth.transfer(address(pairWeth), amount);
         vm.expectEmit(true, true, false, false);
@@ -95,60 +88,29 @@ contract LPRescueTest is Test {
 
     function testFail_TokenAMakesPairStuck() public {
         _makeTokenPairStuck(tokenA, 666);
-        router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            123,
-            456,
-            0,
-            0,
-            address(0),
-            block.timestamp
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 123, 456, 0, 0, address(0), block.timestamp);
     }
 
     function testFail_TokenBMakesPairStuck() public {
         _makeTokenPairStuck(tokenB, 420);
-        router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            123,
-            456,
-            0,
-            0,
-            address(0),
-            block.timestamp
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 123, 456, 0, 0, address(0), block.timestamp);
     }
 
     function testFail_WethMakesPairStuck() public {
         _makeWethPairStuck(666);
-        router.addLiquidityETH{value: 123}(
-            address(tokenA),
-            123,
-            0,
-            0,
-            address(0),
-            block.timestamp
-        );
+        router.addLiquidityETH{value: 123}(address(tokenA), 123, 0, 0, address(0), block.timestamp);
     }
 
     function test_RescuePairStuckWithWeth() public {
         _makeWethPairStuck(3 ether);
-        uint balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance;
         assertEq(tokenA.balanceOf(address(pairWeth)), 0);
         vm.expectEmit(true, true, false, false);
         emit Deposit(address(rescue), 7 ether); // 3 ether + 7 ether = 10 ether
         vm.expectEmit(true, true, true, false);
         emit LPRescued(address(tokenA), address(weth), address(pairWeth));
-        (uint amountAActual, uint amountBActual, uint liquidity) = rescue
-            .addLiquidity{value: 10 ether}(
-            address(tokenA),
-            address(weth),
-            5 ether,
-            10 ether,
-            address(this)
-        );
+        (uint256 amountAActual, uint256 amountBActual, uint256 liquidity) =
+            rescue.addLiquidity{value: 10 ether}(address(tokenA), address(weth), 5 ether, 10 ether, address(this));
         assertEq(address(this).balance, balanceBefore - 7 ether);
         assertGt(pairWeth.totalSupply(), 0);
         assertGt(pairWeth.balanceOf(address(this)), 0);
@@ -159,23 +121,14 @@ contract LPRescueTest is Test {
 
     function test_RescuePairStuckWithToken() public {
         _makeTokenPairStuck(tokenB, 666);
-        uint balanceBeforeB = tokenB.balanceOf(address(this));
-        uint balanceBeforeA = tokenA.balanceOf(address(this));
+        uint256 balanceBeforeB = tokenB.balanceOf(address(this));
+        uint256 balanceBeforeA = tokenA.balanceOf(address(this));
         assertEq(tokenA.balanceOf(address(pair)), 0);
         vm.expectEmit(true, true, true, false);
         emit LPRescued(address(tokenB), address(tokenA), address(pair));
-        (uint amountBActual, uint amountAActual, uint liquidity) = rescue
-            .addLiquidity(
-                address(tokenB),
-                address(tokenA),
-                5 ether,
-                3 ether,
-                address(1)
-            );
-        assertEq(
-            tokenB.balanceOf(address(this)),
-            balanceBeforeB - 5 ether + 666
-        );
+        (uint256 amountBActual, uint256 amountAActual, uint256 liquidity) =
+            rescue.addLiquidity(address(tokenB), address(tokenA), 5 ether, 3 ether, address(1));
+        assertEq(tokenB.balanceOf(address(this)), balanceBeforeB - 5 ether + 666);
         assertEq(tokenA.balanceOf(address(this)), balanceBeforeA - 3 ether);
         assertGt(pair.totalSupply(), 0);
         assertGt(pair.balanceOf(address(1)), 0);
@@ -189,80 +142,46 @@ contract LPRescueTest is Test {
         _makeTokenPairStuck(tokenA, 1 ether);
         assertEq(tokenB.balanceOf(address(pair)), 0);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                LPRescue.InsufficientDesiredAmount.selector,
-                address(tokenA),
-                0.1 ether,
-                1 ether
-            )
+            abi.encodeWithSelector(LPRescue.InsufficientDesiredAmount.selector, address(tokenA), 0.1 ether, 1 ether)
         );
-        rescue.addLiquidity(
-            address(tokenB),
-            address(tokenA),
-            0.5 ether,
-            0.1 ether,
-            address(0)
-        );
+        rescue.addLiquidity(address(tokenB), address(tokenA), 0.5 ether, 0.1 ether, address(0));
     }
 
     function test_PairHasExactlyDesiredAmount() public {
         _makeTokenPairStuck(tokenA, 0.5 ether);
         assertEq(tokenB.balanceOf(address(pair)), 0);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                LPRescue.InsufficientDesiredAmount.selector,
-                address(tokenA),
-                0.5 ether,
-                0.5 ether
-            )
+            abi.encodeWithSelector(LPRescue.InsufficientDesiredAmount.selector, address(tokenA), 0.5 ether, 0.5 ether)
         );
-        rescue.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            0.5 ether,
-            0.5 ether,
-            address(0)
-        );
+        rescue.addLiquidity(address(tokenA), address(tokenB), 0.5 ether, 0.5 ether, address(0));
     }
 
     function test_SuperfluousEthIsRefunded() public {
         _makeTokenPairStuck(tokenA, 666);
         assertEq(tokenB.balanceOf(address(pair)), 0);
-        uint balanceBefore = address(this).balance;
-        uint balanceBeforeA = tokenA.balanceOf(address(this));
-        uint balanceBeforeB = tokenB.balanceOf(address(this));
-        uint pairBalanceBefore = address(pair).balance;
-        uint pairBalanceBeforeA = tokenA.balanceOf(address(pair));
-        uint pairBalanceBeforeB = tokenB.balanceOf(address(pair));
-        uint rescueBalanceBefore = address(rescue).balance;
-        uint rescueBalanceBeforeA = tokenA.balanceOf(address(rescue));
-        uint rescueBalanceBeforeB = tokenB.balanceOf(address(rescue));
+        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBeforeA = tokenA.balanceOf(address(this));
+        uint256 balanceBeforeB = tokenB.balanceOf(address(this));
+        uint256 pairBalanceBefore = address(pair).balance;
+        uint256 pairBalanceBeforeA = tokenA.balanceOf(address(pair));
+        uint256 pairBalanceBeforeB = tokenB.balanceOf(address(pair));
+        uint256 rescueBalanceBefore = address(rescue).balance;
+        uint256 rescueBalanceBeforeA = tokenA.balanceOf(address(rescue));
+        uint256 rescueBalanceBeforeB = tokenB.balanceOf(address(rescue));
         vm.expectEmit(true, true, true, false);
         emit LPRescued(address(tokenA), address(tokenB), address(pair));
-        (uint amountAActual, uint amountBActual, uint liquidity) = rescue
-            .addLiquidity{value: 1 ether}(
-            address(tokenA),
-            address(tokenB),
-            2 ether,
-            2 ether,
-            address(this)
-        );
+        (uint256 amountAActual, uint256 amountBActual, uint256 liquidity) =
+            rescue.addLiquidity{value: 1 ether}(address(tokenA), address(tokenB), 2 ether, 2 ether, address(this));
         assertEq(amountAActual, 2 ether - 666);
         assertEq(amountBActual, 2 ether);
         assertEq(pair.balanceOf(address(this)), liquidity);
 
-        assertEq(
-            tokenA.balanceOf(address(this)),
-            balanceBeforeA - 2 ether + 666
-        );
+        assertEq(tokenA.balanceOf(address(this)), balanceBeforeA - 2 ether + 666);
         assertEq(tokenB.balanceOf(address(this)), balanceBeforeB - 2 ether);
         assertEq(address(this).balance, balanceBefore);
 
         assertEq(address(pair).balance, pairBalanceBefore);
-        assertEq(
-            tokenA.balanceOf(address(pair)),
-            pairBalanceBeforeA + 2 ether - 666
-        );
+        assertEq(tokenA.balanceOf(address(pair)), pairBalanceBeforeA + 2 ether - 666);
         assertEq(tokenB.balanceOf(address(pair)), pairBalanceBeforeB + 2 ether);
 
         assertEq(address(rescue).balance, rescueBalanceBefore);
