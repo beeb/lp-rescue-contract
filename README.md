@@ -52,7 +52,7 @@ To fix this, the library is patched when the dependencies are installed with `np
 
 ```shell
 $ npm i
-$ forge compile
+$ forge install
 $ forge test -vvv
 $ ./utils/deploy_pcs_testnet.sh
 $ ./utils/deploy_pcs_mainnet.sh
