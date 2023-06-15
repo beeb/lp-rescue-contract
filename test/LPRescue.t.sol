@@ -6,7 +6,7 @@ import {IWETH} from "src/interfaces/IWETH.sol";
 import {IDexFactory} from "src/interfaces/IDexFactory.sol";
 import {IDexRouter} from "src/interfaces/IDexRouter.sol";
 import {IDexPair} from "src/interfaces/IDexPair.sol";
-import {Token} from "src/test/Token.sol";
+import {Token} from "src/fixtures/Token.sol";
 import {LPRescue} from "src/LPRescue.sol";
 
 contract LPRescueTest is Test {
@@ -190,5 +190,26 @@ contract LPRescueTest is Test {
 
         assertGt(pair.totalSupply(), 0);
         assertGt(pair.balanceOf(address(this)), 0);
+    }
+
+    function test_PairIsNotStuck() public {
+        vm.expectRevert(LPRescue.PairNotStuck.selector);
+        rescue.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 1 ether, address(0));
+    }
+
+    function test_PairIsTrading() public {
+        /* assertGt(tokenA.balanceOf(address(this)), 0.1 ether);
+        assertGt(tokenB.balanceOf(address(this)), 0.1 ether);
+        assertEq(tokenA.balanceOf(address(pair)), 0);
+        assertEq(tokenB.balanceOf(address(pair)), 0);
+        (uint112 reserve0, uint112 reserve1, uint32 ts) = pair.getReserves();
+        assertEq(reserve0, 0);
+        assertEq(reserve1, 0);
+        emit log_named_uint("ts", ts);
+        assertGt(tokenA.allowance(address(this), address(router)), 0.1 ether);
+        assertGt(tokenB.allowance(address(this), address(router)), 0.1 ether); */
+        router.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 0.1 ether, 0, 0, address(0), block.timestamp);
+        //vm.expectRevert(LPRescue.PairNotStuck.selector);
+        //rescue.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 1 ether, address(0));
     }
 }
