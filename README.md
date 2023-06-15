@@ -45,6 +45,11 @@ to them.
 
 ## Forge/NPM commands
 
+Since the self-deployed Uniswap pair contracts have a different bytecode than the deployed version, the Uniswap V2
+Library function that calculates the pair address deterministically without external calls is not working locally.
+
+To fix this, the library is patched when the dependencies are installed with `npm i`.
+
 ```shell
 $ npm i
 $ forge compile
