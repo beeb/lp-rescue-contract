@@ -43,11 +43,10 @@ from the pair's balance when calculating the invariant (and amount of LP tokens)
 malicious actors send a very small amount of tokens to get the pair in this stuck state, since those tokens are lost
 to them.
 
-## Forge/PNPM commands
+## Forge/NPM commands
 
 ```shell
-$ pnpm i
-$ pnpm update
+$ npm i
 $ forge compile
 $ forge test -vvv
 $ ./utils/deploy_pcs_testnet.sh
