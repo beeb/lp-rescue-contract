@@ -87,6 +87,19 @@ describe('LPRescue', function () {
 		await weth.approve(pairWeth.getAddress(), ethers.MaxUint256)
 	})
 
+	it('uniswap works', async function () {
+		await router.addLiquidity(
+			token0.getAddress(),
+			token1.getAddress(),
+			eth(0.1),
+			eth(0.1),
+			0,
+			0,
+			ethers.ZeroAddress,
+			(await time.latest()) + 3600,
+		)
+	})
+
 	it('token0 should make pair stuck', async function () {
 		await makePairStuck(pair, token0, 666, weth)
 		const reserves = await pair.getReserves()
@@ -200,5 +213,27 @@ describe('LPRescue', function () {
 
 		expect(await pair.totalSupply()).to.be.greaterThan(0)
 		expect(await pair.balanceOf(signer.getAddress())).to.be.greaterThan(0)
+	})
+
+	it('pair is not stuck', async function () {
+		await expect(
+			rescue.addLiquidity(token0.getAddress(), token1.getAddress(), eth(1), eth(1), signer.getAddress()),
+		).to.be.revertedWithCustomError(rescue, 'PairNotStuck')
+	})
+
+	it('pair is already trading', async function () {
+		await router.addLiquidity(
+			token0.getAddress(),
+			token1.getAddress(),
+			eth(0.1),
+			eth(0.1),
+			0,
+			0,
+			ethers.ZeroAddress,
+			(await time.latest()) + 3600,
+		)
+		await expect(
+			rescue.addLiquidity(token0.getAddress(), token1.getAddress(), eth(0.1), eth(0.1), signer.getAddress()),
+		).to.be.revertedWithCustomError(rescue, 'PairNotStuck')
 	})
 })
