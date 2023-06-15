@@ -78,6 +78,10 @@ contract LPRescueTest is Test {
         assertEq(pairWeth.totalSupply(), 0);
     }
 
+    function test_UniswapWorks() public {
+        router.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 0.1 ether, 0, 0, address(0), block.timestamp);
+    }
+
     function test_SyncMakesPairStuck() public {
         _makeTokenPairStuck(tokenA, 666);
     }
@@ -88,17 +92,17 @@ contract LPRescueTest is Test {
 
     function testFail_TokenAMakesPairStuck() public {
         _makeTokenPairStuck(tokenA, 666);
-        router.addLiquidity(address(tokenA), address(tokenB), 123, 456, 0, 0, address(0), block.timestamp);
+        router.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 0.1 ether, 0, 0, address(0), block.timestamp);
     }
 
     function testFail_TokenBMakesPairStuck() public {
         _makeTokenPairStuck(tokenB, 420);
-        router.addLiquidity(address(tokenA), address(tokenB), 123, 456, 0, 0, address(0), block.timestamp);
+        router.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 0.1 ether, 0, 0, address(0), block.timestamp);
     }
 
     function testFail_WethMakesPairStuck() public {
         _makeWethPairStuck(666);
-        router.addLiquidityETH{value: 123}(address(tokenA), 123, 0, 0, address(0), block.timestamp);
+        router.addLiquidityETH{value: 0.1 ether}(address(tokenA), 0.1 ether, 0, 0, address(0), block.timestamp);
     }
 
     function test_RescuePairStuckWithWeth() public {
@@ -198,18 +202,8 @@ contract LPRescueTest is Test {
     }
 
     function test_PairIsTrading() public {
-        /* assertGt(tokenA.balanceOf(address(this)), 0.1 ether);
-        assertGt(tokenB.balanceOf(address(this)), 0.1 ether);
-        assertEq(tokenA.balanceOf(address(pair)), 0);
-        assertEq(tokenB.balanceOf(address(pair)), 0);
-        (uint112 reserve0, uint112 reserve1, uint32 ts) = pair.getReserves();
-        assertEq(reserve0, 0);
-        assertEq(reserve1, 0);
-        emit log_named_uint("ts", ts);
-        assertGt(tokenA.allowance(address(this), address(router)), 0.1 ether);
-        assertGt(tokenB.allowance(address(this), address(router)), 0.1 ether); */
         router.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 0.1 ether, 0, 0, address(0), block.timestamp);
-        //vm.expectRevert(LPRescue.PairNotStuck.selector);
-        //rescue.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 1 ether, address(0));
+        vm.expectRevert(LPRescue.PairNotStuck.selector);
+        rescue.addLiquidity(address(tokenA), address(tokenB), 0.1 ether, 1 ether, address(0));
     }
 }
