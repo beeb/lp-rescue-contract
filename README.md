@@ -43,12 +43,17 @@ from the pair's balance when calculating the invariant (and amount of LP tokens)
 malicious actors send a very small amount of tokens to get the pair in this stuck state, since those tokens are lost
 to them.
 
-## Hardhat commands
+## Forge/NPM commands
+
+Since the self-deployed Uniswap pair contracts have a different bytecode than the deployed version, the Uniswap V2
+Library function that calculates the pair address deterministically without external calls is not working locally.
+
+To fix this, the library is patched when the dependencies are installed with `npm i`.
 
 ```shell
-npx hardhat help
-npx hardhat test
-GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy_[amm].ts
+$ npm i
+$ forge install
+$ forge test -vvv
+$ ./utils/deploy_pcs_testnet.sh
+$ ./utils/deploy_pcs_mainnet.sh
 ```
