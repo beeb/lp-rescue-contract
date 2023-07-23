@@ -3,8 +3,8 @@
 # LP Rescue Contract
 
 <p align="center">
-  <a href="https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml">
-    <img src="https://github.com/beeb/lp-rescue-contract/actions/workflows/hardhat.yml/badge.svg" />
+  <a href="https://github.com/beeb/lp-rescue-contract/actions/workflows/ci.yml">
+    <img src="https://github.com/beeb/lp-rescue-contract/actions/workflows/ci.yml/badge.svg" />
   </a> -
   <a href="https://github.com/beeb/lp-rescue-frontend">Front-end dApp</a>
 </p>
