@@ -14,6 +14,8 @@ some tokens and calling the `sync` function, effectively setting one of the rese
 
 The Router contract will refuse to add liquidity to such a pool, so `LPRescue` can be used to add liquidity instead.
 
+[Live contract on BSC for PcS v2 pools](https://bscscan.com/address/0xbaB1e26127D601407A1E29F55C848BCAB33f6258)
+
 ## Description of the problem
 
 When calling the `sync` function on an AMM pair contract when one of the balances is zero and the other is non-zero,
